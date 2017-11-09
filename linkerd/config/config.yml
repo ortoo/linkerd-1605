@@ -1,0 +1,46 @@
+admin:
+  ip: 0.0.0.0
+  port: 9990
+
+namers:
+- kind: io.l5d.fs
+  rootDir: /io.buoyant/disco
+
+routers:
+  - protocol: h2
+    label: grpc
+    experimental: true
+    identifier:
+      kind: io.l5d.header.path
+      segments: 1
+    dstPrefix: /grpc
+    dtab: |
+      /grpc/* => /$/inet/127.0.0.1/4138
+    service:
+      kind: io.l5d.global
+      responseClassifier:
+        kind: io.l5d.h2.grpc.default
+    servers:
+    - port: 4145
+      ip: 0.0.0.0
+    client:
+      kind: io.l5d.global
+      initialStreamWindowBytes: 65536
+
+  - protocol: h2
+    experimental: true
+    label: incoming-grpc
+    dstPrefix: /grpc
+    identifier:
+      kind: io.l5d.header.path
+      segments: 1
+    dtab: |
+      /grpc/* => /#/io.l5d.fs/grpc
+    service:
+      kind: io.l5d.global
+      responseClassifier:
+        kind: io.l5d.h2.grpc.default
+    servers:
+    - port: 4138
+      ip: 0.0.0.0
+      initialStreamWindowBytes: 65536
